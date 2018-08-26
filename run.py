@@ -3,45 +3,56 @@ import argparse
 import logging
 import json
 
+# from subprocess import Popen, PIPE
 
-def init_logging(args):
-    logger = logging.getLogger(__name__)
-    log_format = "%(asctime)s -  %(message)s"
-    formatter = logging.Formatter(log_format)
 
-    # write logs to log file
-    if args.log_file:
-        handler = logging.FileHandler(args.log_file)
+class Network():
+    def init_logging(self):
+        logger = logging.getLogger(__name__)
+        log_format = "%(asctime)s -  %(message)s"
+        formatter = logging.Formatter(log_format)
+
+        # write logs to log file
+        if self.args.log_file:
+            handler = logging.FileHandler(self.args.log_file)
+            logger.addHandler(handler)
+        else:
+            handler = logging.StreamHandler()
+
+        # write info logs
+        if self.args.verbose:
+            logger.setLevel(logging.INFO)
+
+        handler.setFormatter(formatter)
         logger.addHandler(handler)
-    else:
-        handler = logging.StreamHandler()
 
-    # write info logs
-    if args.verbose:
-        logger.setLevel(logging.INFO)
+        return logger
 
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    def load_conf(self):
+        with open(self.args.conf) as fin:
+            return json.load(fin)
 
-    return logger
+    @staticmethod
+    def parse_args():
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-c", "--conf", required=True, help='verbose')
+        parser.add_argument("-l", "--log_file", help="output log file")
+        parser.add_argument("-v", "--verbose", action='store_true',
+                            help='verbose')
 
+        return parser.parse_args()
 
-def load_conf(args):
-    with open(args.conf) as fin:
-        return json.load(fin)
+    def __init__(self):
+        self.args = self.parse_args()
+        self.logger = self.init_logging()
+        self.conf = self.load_conf()
 
+        # TODO
+        self.logger.info(self.conf)
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--log-file", help="output log file")
-    parser.add_argument("-v", "--verbose", action='store_true', help='verbose')
-    parser.add_argument("-c", "--conf", required=True, help='verbose')
-
-    return parser.parse_args()
+    def check_status(self):
+        pass
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    logger = init_logging(args)
-    conf = load_conf(args)
-    logger.info(conf)
+    network = Network()

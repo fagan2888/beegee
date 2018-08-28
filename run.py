@@ -44,7 +44,7 @@ class Network():
     @staticmethod
     def parse_args():
         parser = argparse.ArgumentParser()
-        parser.add_argument("-c", "--conf", required=True, help='verbose')
+        parser.add_argument("-c", "--conf", required=True, help='conf file')
         parser.add_argument("-l", "--log_file", help="output log file")
         parser.add_argument(
             "-v", "--verbose", action='store_true', default=True,

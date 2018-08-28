@@ -54,11 +54,14 @@ class Network():
         return parser.parse_args()
 
     def _device_is_on(self):
-        self.logger.info('checking if device is on')
+        self.logger.info("checking if device {} is on".format(
+            self.conf['device_name']
+        ))
         cmd = ["networksetup", "-getairportpower", self.conf['device_name']]
         proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
         out, err = proc.communicate()
-        return (proc.returncode == 0) and (out.decode('utf-8').strip().endswith("On"))
+        return (proc.returncode == 0) and (
+                out.decode('utf-8').strip().endswith("On"))
 
     def _correct_network(self):
         self.logger.info("checking if connected to network {}".format(
@@ -67,11 +70,46 @@ class Network():
         cmd = ["networksetup", "-getairportnetwork", self.conf['device_name']]
         proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
         out, err = proc.communicate()
-        return (proc.returncode == 0) and (out.decode('utf-8').strip().endswith(self.conf['network_name']))
+        return (proc.returncode == 0) and (
+                out.decode('utf-8').strip().endswith(
+                    self.conf['network_name']
+                ))
 
+    def _turn_on_device(self):
+        self.logger.info("turning on device {}".format(
+            self.conf['device_name']
+        ))
+        cmd = ["networksetup", "-setairportpower", self.conf['device_name'],
+               "on"]
+        proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
+        out, err = proc.communicate()
+        return
+
+    def _connect_to_network(self):
+        self.logger.info("connecting to network {}".format(
+            self.conf['network_name']
+        ))
+        cmd = ["networksetup", "-setairportnetwork", self.conf['device_name'],
+               self.conf['network_name'], self.conf['password']]
+        proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
+        out, _ = proc.communicate()
+        if not proc.returncode == 0:
+            self.logger.warning("non 0 status code when connecting to network")
+            self.logger.warning("\t{}".format(out))
+
+        return (proc.returncode == 0) and (out is "")
+
+    def run(self):
+        if not self._device_is_on():
+            self._turn_on_device()
+        if not self._correct_network():
+            is_set = False
+            retries = 1
+            while not is_set and retries > 0:
+                is_set = self._connect_to_network()
+                retries -= 1
 
 
 if __name__ == '__main__':
     network = Network()
-    print(network._device_is_on())
-    print(network._correct_network())
+    network.run()
